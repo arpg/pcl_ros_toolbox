@@ -32,7 +32,7 @@ public:
     
     getPrivateNodeHandle().param("termination_method", termination_method_, std::string("time_window"));
     getPrivateNodeHandle().param("termination_value", termination_value_, int(250));
-    getPrivateNodeHandle().param("common_frame", common_frame_id_, std::string("world"));
+    getPrivateNodeHandle().param("common_frame_id", common_frame_id_, std::string("world"));
     getPrivateNodeHandle().param("output_resolution_", output_resolution_, double(0.01));
     getPrivateNodeHandle().param("time_window_inconsistency_thresh", time_window_inconsistency_thresh_, int(2));
     
@@ -175,6 +175,14 @@ public:
   {
     // tf::StampedTransform tform_msg;
     tf::TransformListener listener;
+
+    if (parent_frame_id == child_frame_id)
+    {
+      ROS_WARN("No need to get transform for frame %s. Assuming Identity.", parent_frame_id.c_str());
+      tform_msg.setIdentity();
+      return;
+    }
+
     try
     {
       listener.waitForTransform(parent_frame_id, child_frame_id, ros::Time::now(), ros::Duration(timeout));
