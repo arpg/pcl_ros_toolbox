@@ -13,4 +13,11 @@
     </description>
   </class>
 </library>
+<library path="lib/libstamped_mesh_to_pcl">
+  <class name="pcl_ros_toolbox/StampedMeshToPcl" type="pcl_ros_toolbox::StampedMeshToPcl" base_class_type="nodelet::Nodelet">
+    <description>
+      pcl_ros_toolbox
+    </description>
+  </class>
+</library>
 </class_libraries>

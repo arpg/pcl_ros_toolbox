@@ -9,6 +9,7 @@ set(PACKAGE_DEPENDENCIES
   std_srvs
   nodelet
   sensor_msgs
+  mesh_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS ${PACKAGE_DEPENDENCIES})
@@ -33,3 +34,6 @@ target_link_libraries(approx_time_concatenate_server ${LINK_LIBS})
 
 add_library(mixed_concatenate_server src/mixed_concatenate_server.cpp)
 target_link_libraries(mixed_concatenate_server ${LINK_LIBS})
+
+add_library(stamped_mesh_to_pcl src/stamped_mesh_to_pcl.cpp)
+target_link_libraries(stamped_mesh_to_pcl ${LINK_LIBS})
