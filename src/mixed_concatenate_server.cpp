@@ -22,6 +22,9 @@ namespace pcl_ros_toolbox
 class MixedConcatenateServer : public nodelet::Nodelet
 {
 public:
+  typedef pcl::PointXYZI PCPoint;
+  typedef pcl::PointCloud<PCPoint> PC;
+
   // MixedConcatenateServer();
 
   inline virtual void onInit()
@@ -124,7 +127,8 @@ public:
   inline void publishQueue()
   {
     ros::Time last_time;
-    pcl::PointCloud<pcl::PointXYZ> whole_cloud;
+    // pcl::PointCloud<pcl::PointXYZ> whole_cloud;
+    PC whole_cloud;
     // pcl::PCLPointCloud2 whole_cloud;
 
     while(!msg_queue_.empty())
@@ -141,7 +145,7 @@ public:
       tf::StampedTransform tform_msg;
       getTransformFromTree(common_frame_id_, last_frame_id, tform_msg, last_time);
 
-      pcl::PointCloud<pcl::PointXYZ> cloud;
+      PC cloud;
 		  pcl::fromROSMsg(*(msg_queue_.back()), cloud);
 
       pcl_ros::transformPointCloud (cloud, cloud, tform_msg);
