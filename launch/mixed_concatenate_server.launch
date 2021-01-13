@@ -1,5 +1,6 @@
 <launch>
   
+  <arg name="ns" default=""/>
   <arg name="input_topic" default="/input"/>
   <arg name="output_topic" default="/output"/>
   <arg name="common_frame_id" default="world"/>
@@ -9,17 +10,17 @@
   <!-- number of times to allow inconsistent time window before resizing (like inverse of an adaptation rate) -->
   <arg name="time_window_inconsistency_thresh" default="0"/>
 
-  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen"/>
-  <node pkg="nodelet" type="nodelet" name="mixed_concatenate_server_nodelet" args="load pcl_ros_toolbox/MixedConcatenateServer pcl_manager" output="screen">
+  <!-- <node pkg="nodelet" type="nodelet" name="$(arg ns)pcl_manager" args="manager" output="screen"/> -->
+  <node pkg="nodelet" type="nodelet" name="$(arg ns)mixed_concatenate_server_nodelet" args="standalone pcl_ros_toolbox/MixedConcatenateServer pcl_manager" output="screen">
     <remap from="~input" to="$(arg input_topic)" />
-    <remap from="~output" to="/concatenated_cloud" />
+    <remap from="~output" to="$(arg ns)/mixed_cloud" />
 		<param name="termination_method" value="$(arg termination_method)"/>
 		<param name="termination_value" value="$(arg termination_value)"/>
 		<param name="common_frame_id" value="$(arg common_frame_id)"/>
     <param name="time_window_inconsistency_thresh" value="$(arg time_window_inconsistency_thresh)"/>
 	</node>
-  <node pkg="nodelet" type="nodelet" name="voxel_grid_filter_nodelet" args="load pcl/VoxelGrid pcl_manager" output="screen">
-        <remap from="~input" to="/concatenated_cloud" />
+  <node pkg="nodelet" type="nodelet" name="$(arg ns)voxel_grid_filter_nodelet" args="standalone pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input" to="$(arg ns)/mixed_cloud" />
         <remap from="~output" to="$(arg output_topic)" />
         <param name="filter_field_name" value="z"/>
         <param name="filter_limit_min" value="-100000"/>

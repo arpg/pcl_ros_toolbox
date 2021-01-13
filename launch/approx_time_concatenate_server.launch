@@ -1,0 +1,54 @@
+<launch>
+  
+  <arg name="ns"                default=""/>
+  <arg name="input0_topic"      default="input_0"/>
+  <arg name="input1_topic"      default="input_1"/>
+  <!-- <arg name="input2_topic"      default="input_2"/>
+  <arg name="input3_topic"      default="input_3"/>
+  <arg name="input4_topic"      default="input_4"/>
+  <arg name="input5_topic"      default="input_5"/>
+  <arg name="input6_topic"      default="input_6"/>
+  <arg name="input7_topic"      default="input_7"/>
+  <arg name="input8_topic"      default="input_8"/>
+  <arg name="input9_topic"      default="input_9"/> -->
+  <arg name="output_topic"      default="output"/>
+
+  <!-- <arg name="num_inputs" default="world"/> -->
+  <arg name="common_frame_id"   default="world"/>
+  <arg name="min_rate"          default="4"/>
+  <arg name="sync_queue_size"   default="5"/>
+  <arg name="sub_queue_size"    default="5"/>
+
+  <arg name="output_resolution" default="0.01"/>
+
+  <!-- <node pkg="nodelet" type="nodelet" name="$(arg ns)pcl_manager" args="manager" output="screen"/> -->
+  <node pkg="nodelet" type="nodelet" name="$(arg ns)approx_time_concatenate_server_nodelet" args="standalone pcl_ros_toolbox/ApproxTimeConcatenateServer pcl_manager" output="screen">
+    <remap from="~input_0"            to="$(arg input0_topic)" />
+    <remap from="~input_1"            to="$(arg input1_topic)" />
+    <!-- <remap from="~input_2"            to="$(arg input2_topic)" />
+    <remap from="~input_3"            to="$(arg input3_topic)" />
+    <remap from="~input_4"            to="$(arg input4_topic)" />
+    <remap from="~input_5"            to="$(arg input5_topic)" />
+    <remap from="~input_6"            to="$(arg input6_topic)" />
+    <remap from="~input_7"            to="$(arg input7_topic)" />
+    <remap from="~input_8"            to="$(arg input8_topic)" />
+    <remap from="~input_9"            to="$(arg input9_topic)" /> -->
+    <remap from="~output"             to="$(arg ns)/mixed_cloud" />
+
+		<!-- <param name="num_inputs" value="$(arg num_inputs)"/> -->
+		<param name="common_frame_id"   value="$(arg common_frame_id)"/>
+		<param name="min_rate"          value="$(arg min_rate)"/>
+		<param name="sync_queue_size"   value="$(arg sync_queue_size)"/>
+		<param name="sub_queue_size"    value="$(arg sub_queue_size)"/>
+	</node>
+  <node pkg="nodelet" type="nodelet" name="$(arg ns)voxel_grid_filter_nodelet" args="standalone pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input"                  to="$(arg ns)/mixed_cloud" />
+        <remap from="~output"                 to="$(arg output_topic)" />
+        <param name="filter_field_name"       value="z"/>
+        <param name="filter_limit_min"        value="-100000"/>
+        <param name="filter_limit_max"        value="100000"/>
+        <param name="filter_limit_negative"   value="false"/>
+        <param name="leaf_size"               value="$(arg output_resolution)"/>
+	</node>
+
+</launch>
