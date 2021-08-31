@@ -1,0 +1,24 @@
+<launch>
+  
+  <arg name="input_topic"             default="input"/>
+  <arg name="output_topic"            default="output"/>
+  <arg name="duration_start"          default="0.0"/>
+  <arg name="duration_stop"           default="0.0"/>
+  <arg name="aggregation_frequency"   default="1.0"/>
+  <arg name="publish_frequency"       default="1.0"/>
+  <arg name="common_frame_id"         default="world"/>
+  <arg name="voxelgrid_resolution"    default="0.05"/>
+
+  <!-- <node pkg="nodelet" type="nodelet" name="$(arg ns)pcl_manager" args="manager" output="screen"/> -->
+  <node pkg="nodelet" type="nodelet" name="pcl_aggregator_nodelet" args="standalone pcl_ros_toolbox/PclAggregator" output="screen" respawn="true">
+    <remap from="~input"                  to="$(arg input_topic)" />
+    <remap from="~output"                 to="$(arg output_topic)" />
+    <param name="duration_start"          value="$(arg duration_start)"/>
+    <param name="duration_stop"           value="$(arg duration_stop)"/>
+    <param name="aggregation_frequency"   value="$(arg aggregation_frequency)"/>
+    <param name="publish_frequency"       value="$(arg publish_frequency)"/>
+    <param name="common_frame_id"         value="$(arg common_frame_id)"/>
+    <param name="voxelgrid_resolution"    value="$(arg voxelgrid_resolution)"/>
+	</node>
+  
+</launch>

@@ -20,4 +20,11 @@
     </description>
   </class>
 </library>
+<library path="lib/libpcl_aggregator">
+  <class name="pcl_ros_toolbox/PclAggregator" type="pcl_ros_toolbox::PclAggregator" base_class_type="nodelet::Nodelet">
+    <description>
+      pcl_ros_toolbox
+    </description>
+  </class>
+</library>
 </class_libraries>

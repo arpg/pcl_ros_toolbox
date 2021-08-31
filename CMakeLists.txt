@@ -13,6 +13,7 @@ set(PACKAGE_DEPENDENCIES
 )
 
 find_package(catkin REQUIRED COMPONENTS ${PACKAGE_DEPENDENCIES})
+find_package(Boost REQUIRED COMPONENTS thread)
 
 include_directories(
   #include
@@ -37,3 +38,6 @@ target_link_libraries(mixed_concatenate_server ${LINK_LIBS})
 
 add_library(stamped_mesh_to_pcl src/stamped_mesh_to_pcl.cpp)
 target_link_libraries(stamped_mesh_to_pcl ${LINK_LIBS})
+
+add_library(pcl_aggregator src/pcl_aggregator.cpp)
+target_link_libraries(pcl_aggregator ${LINK_LIBS} ${Boost_LIBRARIES})
