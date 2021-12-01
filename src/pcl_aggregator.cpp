@@ -25,7 +25,7 @@ namespace pcl_ros_toolbox
 class PclAggregator : public nodelet::Nodelet
 {
 public:
-  typedef pcl::PointXYZI PCPoint;
+  typedef pcl::PointXYZ PCPoint;
   typedef pcl::PointCloud<PCPoint> PC;
 
   // MixedConcatenateServer();

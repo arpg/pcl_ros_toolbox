@@ -41,3 +41,9 @@ target_link_libraries(stamped_mesh_to_pcl ${LINK_LIBS})
 
 add_library(pcl_aggregator src/pcl_aggregator.cpp)
 target_link_libraries(pcl_aggregator ${LINK_LIBS} ${Boost_LIBRARIES})
+
+add_library(pcl_reframer src/pcl_reframer.cpp)
+target_link_libraries(pcl_reframer ${LINK_LIBS})
+
+add_library(pcl_transformer src/pcl_transformer.cpp)
+target_link_libraries(pcl_transformer ${LINK_LIBS})

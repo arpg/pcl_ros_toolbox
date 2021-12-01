@@ -27,4 +27,18 @@
     </description>
   </class>
 </library>
+<library path="lib/libpcl_reframer">
+  <class name="pcl_ros_toolbox/PclReframer" type="pcl_ros_toolbox::PclReframer" base_class_type="nodelet::Nodelet">
+    <description>
+      pcl_ros_toolbox
+    </description>
+  </class>
+</library>
+<library path="lib/libpcl_transformer">
+  <class name="pcl_ros_toolbox/PclTransformer" type="pcl_ros_toolbox::PclTransformer" base_class_type="nodelet::Nodelet">
+    <description>
+      pcl_ros_toolbox
+    </description>
+  </class>
+</library>
 </class_libraries>
