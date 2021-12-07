@@ -10,14 +10,14 @@ set(PACKAGE_DEPENDENCIES
   nodelet
   sensor_msgs
   mesh_msgs
-  # goicp
+  goicp
 )
 
 find_package(catkin REQUIRED COMPONENTS ${PACKAGE_DEPENDENCIES})
 find_package(Boost REQUIRED COMPONENTS thread)
 
 include_directories(
-  # include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -52,8 +52,8 @@ target_link_libraries(pcl_transformer ${LINK_LIBS})
 add_executable(pcd_publisher src/pcd_publisher.cpp)
 target_link_libraries(pcd_publisher ${LINK_LIBS})
 
-# add_library(groundtruth_trajectory_generator src/groundtruth_trajectory_generator.cpp)
-# target_link_libraries(groundtruth_trajectory_generator ${LINK_LIBS})
+add_library(groundtruth_trajectory_generator src/groundtruth_trajectory_generator.cpp)
+target_link_libraries(groundtruth_trajectory_generator ${LINK_LIBS})
 
-# add_executable(groundtruth_trajectory_generator_node src/groundtruth_trajectory_generator_node.cpp)
-# target_link_libraries(groundtruth_trajectory_generator_node groundtruth_trajectory_generator)
+add_executable(groundtruth_trajectory_generator_node src/groundtruth_trajectory_generator_node.cpp)
+target_link_libraries(groundtruth_trajectory_generator_node groundtruth_trajectory_generator)
