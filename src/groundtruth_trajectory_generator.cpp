@@ -21,15 +21,16 @@ void GroundtruthTrajectoryGenerator::Run()
     ReadInputs();
     GetTrajectory();
     WriteOutputs();
+    ROS_INFO("Run Complete!");
 }
 
 
 void GroundtruthTrajectoryGenerator::ReadInputs()
 {
-    // std::vector<sensor_msgs::PointCloud2> model_msgs_;
+    ROS_INFO("Loading model cloud from bag...");
     LoadPointCloud2sFromBag(gt_input_bagfile, std::vector<std::string>{gt_cloud_topic}, model_msgs);
 
-    // std::vector<sensor_msgs::PointCloud2> data_msgs_;
+    ROS_INFO("Loading data clouds from bag...");
     LoadPointCloud2sFromBag(input_bagfile, std::vector<std::string>{cloud_topic}, data_msgs);
 }
 
@@ -51,6 +52,8 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         return;
     }
 
+    ROS_INFO("Starting Trajectory Generation...");
+
     goicp::EstimateTransform srv;
 	srv.request.model_cloud = model_msgs[0];
 
@@ -63,7 +66,7 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         if(icp_client.call(srv))
         {
             geometry_msgs::TransformStamped tform = srv.response.tform;
-            ROS_INFO("Client received transform: %f %f %f %f %f %f %f", tform.transform.translation.x, tform.transform.translation.y, tform.transform.translation.z, tform.transform.rotation.w, tform.transform.rotation.x, tform.transform.rotation.y, tform.transform.rotation.z);
+            ROS_INFO("Client received %d/%d transform: %f %f %f %f %f %f %f", i+1, data_msgs.size(), tform.transform.translation.x, tform.transform.translation.y, tform.transform.translation.z, tform.transform.rotation.w, tform.transform.rotation.x, tform.transform.rotation.y, tform.transform.rotation.z);
             // if (strcmp(initial_tform_inv.header,"unassigned"))
             // {
             //     initial_tform_inv = tform.inverse();
@@ -91,6 +94,11 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         }
         // ros::Rate(1./ros::Duration(0.01)).sleep();
     }
+    // gt_path.header = gt_path.poses.back().header;
+    gt_path.header.frame_id = "map";
+    gt_path.header.stamp = ros::Time::now();
+
+    ROS_INFO("Completed Trajectory Generation with path of length %d.", gt_path.poses.size());
 }
 
 void GroundtruthTrajectoryGenerator::WriteOutputs()
@@ -101,15 +109,12 @@ void GroundtruthTrajectoryGenerator::WriteOutputs()
         return;
     }
 
+    ROS_INFO("Writing path to bag...");
+
     rosbag::Bag outbag;
     outbag.open(output_bagfile, rosbag::bagmode::Write);
 
-    // for(rosbag::MessageInstance const m: rosbag::View(inbag))
-    // {
-        // sensor_msgs::PointCloud2::ConstPtr cloud_msg = m.instantiate<sensor_msgs::PointCloud2>();
-        // if (cloud_msg != NULL)
-        //     ROS_INFO("on cloud");
-    // }
+    outbag.write(gt_path_topic, ros::Time::now(), gt_path);
 
     outbag.close();
 }

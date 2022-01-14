@@ -1,0 +1,31 @@
+<launch>
+
+    <arg name="input_bagfile"     default="$(find pcl_ros_toolbox)/demo/bunny_data_clouds.bag"/>
+    <arg name="cloud_topic"       default="go_icp/data_cloud"/>
+    <arg name="gt_input_bagfile"  default="$(find pcl_ros_toolbox)/demo/bunny_model_cloud.bag"/>
+    <arg name="gt_cloud_topic"    default="go_icp/model_cloud"/>
+    <arg name="gt_path_topic"     default="go_icp/path"/>
+    <arg name="output_bagfile"    default="$(find pcl_ros_toolbox)/demo/bunny_path.bag"/>
+
+    <arg name="goicp_config_file" default="$(find goicp)/demo/config.txt"/>
+    <arg name="goicp_downsample"  default="500"/>
+
+    <arg name="enable_debug"  default="false"/>
+    <arg name="launch_prefix" default="gdb -ex run --args" if="$(eval arg('enable_debug'))"/>
+    <arg name="launch_prefix" default="" unless="$(eval arg('enable_debug'))"/>
+
+    <node pkg="pcl_ros_toolbox" type="groundtruth_trajectory_generator_node" name="groundtruth_trajectory_generator"  output="screen" launch-prefix="$(arg launch_prefix)">
+        <param name="input_bagfile"     value="$(arg input_bagfile)"/>
+        <param name="cloud_topic"       value="$(arg cloud_topic)"/>
+        <param name="gt_input_bagfile"  value="$(arg gt_input_bagfile)"/>
+        <param name="gt_cloud_topic"    value="$(arg gt_cloud_topic)"/>
+        <param name="gt_path_topic"     value="$(arg gt_path_topic)"/>
+        <param name="output_bagfile"    value="$(arg output_bagfile)"/>
+    </node>
+
+    <node pkg="goicp" type="go_icp_server_node" name="go_icp_server" output="screen" launch-prefix="$(arg launch_prefix)">
+        <param name="config_filename" value="$(arg goicp_config_file)"/>
+        <param name="nd_downsampled" value="$(arg goicp_downsample)"/>
+    </node>
+
+</launch>

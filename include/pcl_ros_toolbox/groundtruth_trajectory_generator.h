@@ -10,7 +10,7 @@
 class GroundtruthTrajectoryGenerator
 {
 public:
-	GroundtruthTrajectoryGenerator(ros::NodeHandle& );
+	GroundtruthTrajectoryGenerator(ros::NodeHandle&);
 	void Run();
 	void ReadInputs();
 	void GetTrajectory();
