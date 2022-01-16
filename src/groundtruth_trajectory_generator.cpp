@@ -32,6 +32,9 @@ void GroundtruthTrajectoryGenerator::ReadInputs()
 
     ROS_INFO("Loading data clouds from bag...");
     LoadPointCloud2sFromBag(input_bagfile, std::vector<std::string>{cloud_topic}, data_msgs);
+
+    ROS_INFO("Loading tf tree from bag...");
+    LoadTfsFromBag(input_bagfile, tf_buffer);
 }
 
 void GroundtruthTrajectoryGenerator::GetTrajectory()
@@ -51,6 +54,13 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         ROS_ERROR("Model_msgs is size %d but only size 1 is supported. Skipping groundtruth trajectory generation...", model_msgs.size());
         return;
     }
+    std::vector<std::string> tf_strings;
+    tf_buffer._getFrameStrings(tf_strings);
+    if (tf_strings.size()<1)
+    {
+        ROS_ERROR("Tf_buffer unpopulated. Skipping groundtruth trajectory generation...");
+        return;
+    }
 
     ROS_INFO("Starting Trajectory Generation...");
 
@@ -62,6 +72,7 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
     for (uint i=0; i<data_msgs.size(); i++)
     {
 	    srv.request.data_cloud = data_msgs[i];
+        srv.request.init_tform = tf_buffer.lookupTransform(srv.request.data_cloud.header.frame_id, srv.request.model_cloud.header.frame_id, srv.request.data_cloud.header.stamp);
 
         if(icp_client.call(srv))
         {

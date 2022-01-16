@@ -6,6 +6,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <goicp/EstimateTransform.h>
 #include <pcl_ros_toolbox/load_pointcloud2.hpp>
+#include <pcl_ros_toolbox/load_tfbuffer.hpp>
+#include <tf2_ros/buffer.h>
 
 class GroundtruthTrajectoryGenerator
 {
@@ -21,5 +23,6 @@ private:
 	ros::ServiceClient icp_client;
     tf::TransformListener tf_listener;
 	std::vector<sensor_msgs::PointCloud2> model_msgs, data_msgs;
+	tf2_ros::Buffer tf_buffer;
 	nav_msgs::Path gt_path;
 };

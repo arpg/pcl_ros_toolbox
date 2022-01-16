@@ -7,8 +7,9 @@
     <arg name="gt_path_topic"     default="go_icp/path"/>
     <arg name="output_bagfile"    default="$(find pcl_ros_toolbox)/demo/bunny_path.bag"/>
 
-    <arg name="goicp_config_file" default="$(find goicp)/demo/config.txt"/>
-    <arg name="goicp_downsample"  default="500"/>
+    <arg name="goicp_config_file"       default="$(find goicp)/demo/config.txt"/>
+    <arg name="goicp_downsample"        default="500"/>
+    <arg name="goicp_publish_clouds"    default="true"/>
 
     <arg name="enable_debug"  default="false"/>
     <arg name="launch_prefix" default="gdb -ex run --args" if="$(eval arg('enable_debug'))"/>
@@ -24,8 +25,9 @@
     </node>
 
     <node pkg="goicp" type="go_icp_server_node" name="go_icp_server" output="screen" launch-prefix="$(arg launch_prefix)">
-        <param name="config_filename" value="$(arg goicp_config_file)"/>
-        <param name="nd_downsampled" value="$(arg goicp_downsample)"/>
+        <param name="config_filename"   value="$(arg goicp_config_file)"/>
+        <param name="nd_downsampled"    value="$(arg goicp_downsample)"/>
+        <param name="publish_clouds"    value="$(arg goicp_publish_clouds)"/>
     </node>
 
 </launch>
