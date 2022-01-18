@@ -72,30 +72,43 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
     for (uint i=0; i<data_msgs.size(); i++)
     {
 	    srv.request.data_cloud = data_msgs[i];
-        srv.request.init_tform = tf_buffer.lookupTransform(srv.request.data_cloud.header.frame_id, srv.request.model_cloud.header.frame_id, srv.request.data_cloud.header.stamp);
+
+        try
+        {
+            geometry_msgs::TransformStamped init_tform = tf_buffer.lookupTransform(srv.request.model_cloud.header.frame_id, srv.request.data_cloud.header.frame_id, srv.request.data_cloud.header.stamp); // set initial tform to tform between model to data
+            srv.request.init_tform = init_tform.transform;
+        }
+        catch (tf2::TransformException &ex) 
+        {
+            // ROS_WARN("%s",ex.what());
+            ROS_WARN("Failed to lookup transform %s->%s. Skipping cloud %d/%d...", i+1, data_msgs.size(), srv.request.data_cloud.header.frame_id, srv.request.model_cloud.header.frame_id);
+            ros::Duration(0.01).sleep();
+            continue;
+        }
 
         if(icp_client.call(srv))
         {
-            geometry_msgs::TransformStamped tform = srv.response.tform;
-            ROS_INFO("Client received %d/%d transform: %f %f %f %f %f %f %f", i+1, data_msgs.size(), tform.transform.translation.x, tform.transform.translation.y, tform.transform.translation.z, tform.transform.rotation.w, tform.transform.rotation.x, tform.transform.rotation.y, tform.transform.rotation.z);
+            geometry_msgs::Transform tform = srv.response.tform;
+            ROS_INFO("Client received %d/%d transform (data->model): %f %f %f %f %f %f %f", i+1, data_msgs.size(), tform.translation.x, tform.translation.y, tform.translation.z, tform.rotation.w, tform.rotation.x, tform.rotation.y, tform.rotation.z);
             // if (strcmp(initial_tform_inv.header,"unassigned"))
             // {
             //     initial_tform_inv = tform.inverse();
             // }
             geometry_msgs::Point tform_pt;
-            tform_pt.x = tform.transform.translation.x;
-            tform_pt.y = tform.transform.translation.y;
-            tform_pt.z = tform.transform.translation.z;
+            tform_pt.x = tform.translation.x;
+            tform_pt.y = tform.translation.y;
+            tform_pt.z = tform.translation.z;
             geometry_msgs::Quaternion tform_quat;
-            tform_quat.x = tform.transform.rotation.x;
-            tform_quat.y = tform.transform.rotation.y;
-            tform_quat.z = tform.transform.rotation.z;
-            tform_quat.w = tform.transform.rotation.w;
+            tform_quat.x = tform.rotation.x;
+            tform_quat.y = tform.rotation.y;
+            tform_quat.z = tform.rotation.z;
+            tform_quat.w = tform.rotation.w;
             geometry_msgs::Pose tform_pose;
             tform_pose.position = tform_pt;
             tform_pose.orientation = tform_quat;
             geometry_msgs::PoseStamped tform_posestamped;
-            tform_posestamped.header = tform.header;
+            tform_posestamped.header.frame_id = srv.request.model_cloud.header.frame_id;
+            tform_posestamped.header.stamp = srv.request.data_cloud.header.stamp;
             tform_posestamped.pose = tform_pose;
             gt_path.poses.push_back(tform_posestamped);
         }
