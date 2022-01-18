@@ -25,7 +25,7 @@ private:
 	ros::ServiceClient icp_client;
     tf::TransformListener tf_listener;
 	std::vector<sensor_msgs::PointCloud2> model_msgs, data_msgs;
-	tf2_ros::Buffer tf_buffer;
+	tf2_ros::Buffer* tf_buffer;
 	nav_msgs::Path gt_path;
 	bool output_cloud, output_gt_cloud;
 	bool require_tfs;
