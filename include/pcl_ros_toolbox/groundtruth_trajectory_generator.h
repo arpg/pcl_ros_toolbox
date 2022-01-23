@@ -15,6 +15,7 @@ class GroundtruthTrajectoryGenerator
 {
 public:
 	GroundtruthTrajectoryGenerator(ros::NodeHandle&);
+	GroundtruthTrajectoryGenerator(GroundtruthTrajectoryGenerator&);
 	void Run();
 	void ReadInputs();
 	void GetTrajectory();
@@ -29,5 +30,7 @@ private:
 	nav_msgs::Path gt_path;
 	bool output_cloud, output_gt_cloud;
 	bool require_tfs;
+	bool publish_path;
+	ros::Publisher path_pub;
 	float cloud_throttle_rate;
 };

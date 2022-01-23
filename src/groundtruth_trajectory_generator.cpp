@@ -14,6 +14,10 @@ GroundtruthTrajectoryGenerator::GroundtruthTrajectoryGenerator(ros::NodeHandle& 
     
     nh.param<float>("cloud_throttle_rate", cloud_throttle_rate, 0.f); // rate at which input clouds are throttled, to improve performance / reduce calls to goicp. 0 is unthrottled.
     nh.param<bool>("require_tfs", require_tfs, false);
+    nh.param<bool>("publish_path", publish_path, false);
+
+    if (publish_path)
+        path_pub = nh.advertise<nav_msgs::Path>("gt_path", 1);
 
     std::string icp_client_topic;
     nh.param<std::string>("icp_client_topic", icp_client_topic, std::string("/go_icp_server/estimate_transform").c_str());
@@ -22,12 +26,26 @@ GroundtruthTrajectoryGenerator::GroundtruthTrajectoryGenerator(ros::NodeHandle& 
     Run();
 }
 
+GroundtruthTrajectoryGenerator::GroundtruthTrajectoryGenerator(GroundtruthTrajectoryGenerator& rhs)
+{
+
+}
+
 void GroundtruthTrajectoryGenerator::Run()
 {
     ReadInputs();
-    GetTrajectory();
-    WriteOutputs();
-    ROS_INFO("Run Complete!");
+    while (ros::ok())
+    {
+        GetTrajectory();
+        WriteOutputs();
+        if (publish_path)
+        {
+            ROS_INFO("Publishing path...");
+            path_pub.publish(gt_path);
+        }
+        ROS_INFO("Run Complete!");
+        ros::Rate(1).sleep();
+    }
 }
 
 
@@ -38,20 +56,25 @@ void GroundtruthTrajectoryGenerator::ReadInputs()
     ROS_INFO("Loading tf tree from bag...");
     if (!LoadTfsFromBag(input_bagfile, tf_buffer))
         ROS_ERROR("Error loading tf tree.");
-    std::vector<std::string> tf_strings;
-    tf_buffer._getFrameStrings(tf_strings);
-    if (tf_strings.size()<1)
-    {
-        if (require_tfs)
-        {
-            ROS_ERROR("Tf_buffer unpopulated. Skipping groundtruth trajectory generation...");
-            return;
-        }
-        else
-        {
-            ROS_WARN("Tf_buffer unpopulated but tfs not required. Assuming Identity...");
-        }
-    }
+    // ROS_INFO("tf has frames: %s", tf_buffer->allFramesAsString().c_str());
+    // std::vector<std::string> tf_strings;
+    // tf_buffer._getFrameStrings(tf_strings);
+    // for (uint i=0; i<tf_strings.size(); i++)
+    // {
+    //     ROS_INFO("tf has string %s", tf_strings[i].c_str());
+    // }
+    // if (tf_strings.size()<1)
+    // {
+    //     if (require_tfs)
+    //     {
+    //         ROS_ERROR("Tf_buffer unpopulated. Skipping groundtruth trajectory generation...");
+    //         return;
+    //     }
+    //     else
+    //     {
+    //         ROS_WARN("Tf_buffer unpopulated but tfs not required. Assuming Identity...");
+    //     }
+    // }
 
     ROS_INFO("Loading model cloud from pcd...");
     // LoadPointCloud2sFromBag(gt_input_bagfile, std::vector<std::string>{gt_cloud_topic}, model_msgs);
@@ -100,14 +123,14 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         geometry_msgs::TransformStamped init_tform;
         try
         {
-            init_tform = tf_buffer.lookupTransform(srv.request.model_cloud.header.frame_id, srv.request.data_cloud.header.frame_id, srv.request.data_cloud.header.stamp); // set initial tform to tform between model to data
+            init_tform = tf_buffer->lookupTransform(srv.request.model_cloud.header.frame_id, srv.request.data_cloud.header.frame_id, srv.request.data_cloud.header.stamp); // set initial tform to tform between model to data
         }
         catch (tf2::TransformException &ex) 
         {
             // ROS_WARN("%s",ex.what());
             if (require_tfs)
             {
-                ROS_WARN("Failed to lookup transform %s->%s. Skipping cloud %d/%d...", i+1, data_msgs.size(), srv.request.data_cloud.header.frame_id.c_str(), srv.request.model_cloud.header.frame_id.c_str());
+                ROS_WARN("Failed to lookup transform %s->%s:\n%s\nSkipping cloud %d/%d...", srv.request.data_cloud.header.frame_id.c_str(), srv.request.model_cloud.header.frame_id.c_str(), ex.what(), i+1, data_msgs.size());
                 // ros::Duration(0.01).sleep();
                 continue;
             }
@@ -153,9 +176,10 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         }
         // ros::Rate(1./ros::Duration(0.01)).sleep();
     }
-    gt_path.header = gt_path.poses.back().header;
-    // gt_path.header.frame_id = srv.request.model_cloud.header.frame_id;
-    // gt_path.header.stamp = gt_path.poses.back().frame_id;;
+    // if (gt_path.poses.size()>0)
+    //     gt_path.header = gt_path.poses.back().header;
+    gt_path.header.frame_id = srv.request.model_cloud.header.frame_id;
+    // gt_path.header.stamp = gt_path.poses.back().frame_id;
 
     ROS_INFO("Completed Trajectory Generation with path of length %d.", gt_path.poses.size());
 }
@@ -168,22 +192,23 @@ void GroundtruthTrajectoryGenerator::WriteOutputs()
         return;
     }
 
-    ROS_INFO("Writing path to bag...");
-
     rosbag::Bag outbag;
     outbag.open(output_bagfile, rosbag::bagmode::Write);
 
     if (output_gt_cloud)
     {
+        ROS_INFO("Writing gt cloud to bag...");
         outbag.write(gt_cloud_topic, ros::Time::now(), model_msgs[0]);
     }
     if (output_cloud)
     {
+        ROS_INFO("Writing data clouds to bag...");
         for (uint i=0; i<data_msgs.size(); i++)
         {
             outbag.write(cloud_topic, ros::Time::now(), data_msgs[i]);
         }
     }
+    ROS_INFO("Writing path to bag...");
     outbag.write(gt_path_topic, ros::Time::now(), gt_path);
 
     outbag.close();
