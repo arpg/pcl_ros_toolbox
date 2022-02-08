@@ -1,8 +1,8 @@
 <launch>
   
-    <arg name="input_bagfile"       default="/media/mike/MIKEMDATA3/2021_09_27_POST_EVENT_TEST/H01_ouster_imu_tfs_1.bag"/>
+    <arg name="input_bagfile"       default="/media/mike/MIKEMDATA3/2021_09_27_POST_EVENT_TEST/H01_ouster_imu_tfs_5.bag"/>
     <arg name="cloud_topic"         default="/H01/horiz/os_cloud_node/points"/>
-    <arg name="cloud_throttle_rate" default="0.1"/>
+    <arg name="cloud_throttle_rate" default="1."/>
     <arg name="output_cloud"        default="false"/>
     <arg name="gt_input_pcdfile"    default="/media/mike/MIKEMDATA3/2021_09_27_POST_EVENT_TEST/systems_final.pcd"/>
     <arg name="gt_cloud_frame"      default="world"/>
@@ -16,7 +16,7 @@
     <arg name="goicp_config_file"       default="$(find goicp)/demo/config.txt"/>
     <arg name="goicp_downsample"        default="500"/>
     <arg name="goicp_publish_clouds"    default="true"/>
-    <arg name="goicp_always_update_dt"  default="false"/>
+    <arg name="goicp_always_update_dt"  default="true"/>
     <arg name="goicp_server_timeout"    default="0.0"/>
 
     <arg name="enable_debug"  default="false"/>
@@ -38,7 +38,7 @@
         <param name="publish_path"         value="$(arg publish_path)"/>
     </node>
 
-    <node pkg="goicp" type="go_icp_server_node" name="go_icp_server" output="screen" launch-prefix="$(arg launch_prefix)">
+    <node pkg="goicp" type="go_icp_server_node" name="go_icp_server" output="log" launch-prefix="$(arg launch_prefix)">
         <param name="config_filename"   value="$(arg goicp_config_file)"/>
         <param name="nd_downsampled"    value="$(arg goicp_downsample)"/>
         <param name="publish_clouds"    value="$(arg goicp_publish_clouds)"/>

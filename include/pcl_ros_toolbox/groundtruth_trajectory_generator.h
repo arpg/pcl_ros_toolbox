@@ -27,10 +27,10 @@ private:
     tf::TransformListener tf_listener;
 	std::vector<sensor_msgs::PointCloud2> model_msgs, data_msgs;
 	tf2_ros::Buffer* tf_buffer;
-	nav_msgs::Path gt_path;
+	nav_msgs::Path gt_path, init_path;
 	bool output_cloud, output_gt_cloud;
 	bool require_tfs;
 	bool publish_path;
-	ros::Publisher path_pub;
+	ros::Publisher path_pub, init_path_pub;
 	float cloud_throttle_rate;
 };

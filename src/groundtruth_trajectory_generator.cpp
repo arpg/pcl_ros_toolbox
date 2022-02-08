@@ -18,6 +18,7 @@ GroundtruthTrajectoryGenerator::GroundtruthTrajectoryGenerator(ros::NodeHandle& 
 
     if (publish_path)
         path_pub = nh.advertise<nav_msgs::Path>("gt_path", 1);
+    init_path_pub = nh.advertise<nav_msgs::Path>("init_path", 1);
 
     std::string icp_client_topic;
     nh.param<std::string>("icp_client_topic", icp_client_topic, std::string("/go_icp_server/estimate_transform").c_str());
@@ -34,18 +35,18 @@ GroundtruthTrajectoryGenerator::GroundtruthTrajectoryGenerator(GroundtruthTrajec
 void GroundtruthTrajectoryGenerator::Run()
 {
     ReadInputs();
-    while (ros::ok())
-    {
+    // while (ros::ok())
+    // {
         GetTrajectory();
         WriteOutputs();
-        if (publish_path)
-        {
-            ROS_INFO("Publishing path...");
-            path_pub.publish(gt_path);
-        }
+        // if (publish_path)
+        // {
+        //     ROS_INFO("Publishing path...");
+        //     path_pub.publish(gt_path);
+        // }
         ROS_INFO("Run Complete!");
-        ros::Rate(1).sleep();
-    }
+    //     ros::Rate(1).sleep();
+    // }
 }
 
 
@@ -114,10 +115,15 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
     goicp::EstimateTransform srv;
 	srv.request.model_cloud = model_msgs[0];
 
+    init_path.poses.clear();
+    gt_path.poses.clear();
+
     // geometry_msgs::TransformStamped initial_tform_inv;
     // initial_tform_inv.header = "unassigned";
     for (uint i=0; i<data_msgs.size(); i++)
     {
+
+        // ros::Duration(1.0).sleep();
 	    srv.request.data_cloud = data_msgs[i];
 
         geometry_msgs::TransformStamped init_tform;
@@ -148,27 +154,66 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
         }
         srv.request.init_tform = init_tform.transform;
 
+        geometry_msgs::PoseStamped init_tform_pose;
+        init_tform_pose.header.frame_id = srv.request.model_cloud.header.frame_id;
+        init_tform_pose.header.stamp = srv.request.data_cloud.header.stamp;
+        init_tform_pose.pose.position.x = init_tform.transform.translation.x;
+        init_tform_pose.pose.position.y = init_tform.transform.translation.y;
+        init_tform_pose.pose.position.z = init_tform.transform.translation.z;
+        init_tform_pose.pose.orientation.x = init_tform.transform.rotation.x;
+        init_tform_pose.pose.orientation.y = init_tform.transform.rotation.y;
+        init_tform_pose.pose.orientation.z = init_tform.transform.rotation.z;
+        init_tform_pose.pose.orientation.w = init_tform.transform.rotation.w;
+        init_path.poses.push_back(init_tform_pose);
+        init_path.header.frame_id = srv.request.model_cloud.header.frame_id;
+        init_path_pub.publish(init_path);
+
         if(icp_client.call(srv))
         {
             geometry_msgs::Transform tform = srv.response.tform;
-            ROS_INFO("Client received %d/%d transform (%s->%s): %f %f %f %f %f %f %f", i+1, data_msgs.size(), srv.request.data_cloud.header.frame_id.c_str(), srv.request.model_cloud.header.frame_id.c_str(), tform.translation.x, tform.translation.y, tform.translation.z, tform.rotation.x, tform.rotation.y, tform.rotation.z, tform.rotation.w);
+            ROS_INFO("Client received %d/%d transform (%s->%s) w error %f: %f %f %f %f %f %f %f", i+1, data_msgs.size(), srv.request.data_cloud.header.frame_id.c_str(), srv.request.model_cloud.header.frame_id.c_str(), srv.response.error, tform.translation.x, tform.translation.y, tform.translation.z, tform.rotation.x, tform.rotation.y, tform.rotation.z, tform.rotation.w);
+
+            if (isnan(tform.translation.x) || isnan(tform.translation.y) || isnan(tform.translation.z) || isnan(tform.rotation.x) || isnan(tform.rotation.y) || isnan(tform.rotation.z) || isnan(tform.rotation.w))
+            {
+                ROS_ERROR("Client returned nan value. Skipping...");
+                continue;
+            }
+
+            // tf::Transform this_tf;
+            // this_tf.setOrigin(tf::Vector3(tform.translation.x, tform.translation.y, tform.translation.z));
+	        // this_tf.setRotation(tf::Quaternion(tform.rotation.x, tform.rotation.y, tform.rotation.z, tform.rotation.w));
+
+            // tf::Transform new_tf = last_tf*this_tf;
+            // last_tf = new_tf;
+
+            // tform.translation.x = new_tf.getOrigin().getX();
+            // tform.translation.y = new_tf.getOrigin().getY();
+            // tform.translation.z = new_tf.getOrigin().getZ();
+            // tform.rotation.x = new_tf.getRotation().getX();
+            // tform.rotation.y = new_tf.getRotation().getY();
+            // tform.rotation.z = new_tf.getRotation().getZ();
+            // tform.rotation.w = new_tf.getRotation().getW();
+
             // if (strcmp(initial_tform_inv.header,"unassigned"))
             // {
             //     initial_tform_inv = tform.inverse();
             // }
             // service return data->model, but the path we wish to generate is model->data
-            float qlen2 = pow(tform.rotation.x,2)+pow(tform.rotation.y,2)+pow(tform.rotation.z,2)+pow(tform.rotation.w,2);
+            // float qlen2 = pow(tform.rotation.x,2)+pow(tform.rotation.y,2)+pow(tform.rotation.z,2)+pow(tform.rotation.w,2);
             geometry_msgs::PoseStamped tform_posestamped;
             tform_posestamped.header.frame_id = srv.request.model_cloud.header.frame_id;
             tform_posestamped.header.stamp = srv.request.data_cloud.header.stamp;
-            tform_posestamped.pose.position.x = -tform.translation.x;
-            tform_posestamped.pose.position.y = -tform.translation.y;
-            tform_posestamped.pose.position.z = -tform.translation.z;
-            tform_posestamped.pose.orientation.x = -tform.rotation.x/qlen2;
-            tform_posestamped.pose.orientation.y = -tform.rotation.y/qlen2;
-            tform_posestamped.pose.orientation.z = -tform.rotation.z/qlen2;
-            tform_posestamped.pose.orientation.w = tform.rotation.w/qlen2;
+            tform_posestamped.pose.position.x = tform.translation.x;
+            tform_posestamped.pose.position.y = tform.translation.y;
+            tform_posestamped.pose.position.z = tform.translation.z;
+            tform_posestamped.pose.orientation.x = tform.rotation.x;
+            tform_posestamped.pose.orientation.y = tform.rotation.y;
+            tform_posestamped.pose.orientation.z = tform.rotation.z;
+            tform_posestamped.pose.orientation.w = tform.rotation.w;
             gt_path.poses.push_back(tform_posestamped);
+            
+            gt_path.header.frame_id = srv.request.model_cloud.header.frame_id;
+            path_pub.publish(gt_path);
         }
         else
         {
@@ -178,7 +223,7 @@ void GroundtruthTrajectoryGenerator::GetTrajectory()
     }
     // if (gt_path.poses.size()>0)
     //     gt_path.header = gt_path.poses.back().header;
-    gt_path.header.frame_id = srv.request.model_cloud.header.frame_id;
+    // gt_path.header.frame_id = srv.request.model_cloud.header.frame_id;
     // gt_path.header.stamp = gt_path.poses.back().frame_id;
 
     ROS_INFO("Completed Trajectory Generation with path of length %d.", gt_path.poses.size());
